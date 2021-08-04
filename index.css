@@ -1,0 +1,64 @@
+html {
+	--dicta-blue: #007ee5;
+	background: beige;
+	font-family: Arimo, sans-serif;
+}
+
+body {
+	margin: 0;
+}
+
+.title {
+	font-family: Segoe UI, Arial, sans-serif;
+	text-align: center;
+}
+
+header {
+	color: white;
+	padding: 0.25em;
+	margin-bottom: 1em;
+	background: var(--dicta-blue);
+}
+
+.unwanted {
+	display: none;
+}
+
+#flex-container {
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	margin: 0 auto;
+	width: 500px;
+}
+
+#search-text {
+	background: white;
+	border-radius: 5px;
+	border: 1px black solid;
+	height: 200px;
+	padding: 0.25em 0.5em;
+	resize: none;
+	width: 400px;
+}
+.talmud-text {
+	font-family: mft_narkisclassic, serif;
+}
+
+#search-button{
+	background: var(--dicta-blue);
+	border-radius: 10px;
+	color: white;
+	font-size: 12pt;
+	line-height: 1.5;
+	margin: 1em 0;
+	padding: .3rem 1.75rem;
+}
+
+#results-count {
+	font-size: 11pt;
+}
+
+#results-container {
+	display: none;
+}

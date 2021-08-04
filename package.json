@@ -1,0 +1,15 @@
+{
+	"name": "dicta-project",
+	"version": "0.0.1",
+	"description": "Answers the question 'how often is a mishna citation consecutively repeated in the talmud'",
+	"license": "MIT",
+	"private": true,
+	"repository": {},
+	"scripts": {
+		"lint": "eslint src"
+	},
+	"author": "Michael Tsaban",
+	"devDependencies": {
+		"eslint": "^7.31.0"
+	}
+}
