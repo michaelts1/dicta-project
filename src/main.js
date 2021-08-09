@@ -102,11 +102,11 @@ function query(masechet, searchQuery) {
 	$("#results-container").show();
 }
 
-$("#search-button").click(() => {
+function searchClicked() {
 	$("#results").empty();
 	$("#results-container").hide();
 
-	const searchQuery = $("#search-text").val();
+	const searchQuery = $("#search-text").val().replace(/\s+/g, " ");
 	if (searchQuery.length < 4) {
 		window.alert("הביטוי חייב להכיל לפחות 4 תווים");
 		return;
@@ -117,6 +117,13 @@ $("#search-button").click(() => {
 	}, reason => {
 		alert("החיפוש נכשל.\n", reason);
 	});
+}
+
+$("#search-button").click(searchClicked);
+$("#search-text").on("keypress", event => { // Treat ctrl+enter as click
+	if (event.keyCode === 13 && event.ctrlKey) {
+		searchClicked();
+	}
 });
 
 $("#show-unwanted").click(()=>{
