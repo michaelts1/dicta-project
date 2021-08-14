@@ -102,7 +102,8 @@ export const getMasechet = (function() {
 		// Strip off unrelated text:
 		masechet.text = masechet.text
 			.replace(/[<>\\a-z/]/g, "") // html tags e.g. <big>, </strong> etc.
-			.replace(/\s{2,}/g, " "); // white space
+			.replace(/\s{2,}/g, " ") // white space
+			.replace(/מתני'/g, "מתני׳"); // uniform apostrophes
 
 		// Cache for later use:
 		talmudTree[seder][masechet] = masechet.text;
