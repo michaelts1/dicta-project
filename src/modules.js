@@ -99,11 +99,13 @@ export const getMasechet = (function() {
 		// Join all amudim:
 		masechet.text = masechet.text.join(" ");
 
-		// Strip off unrelated text:
+		// Formatting fixes (Sefaria's talmud is pretty badly formatted):
 		masechet.text = masechet.text
-			.replace(/[<>\\a-z/]/g, "") // html tags e.g. <big>, </strong> etc.
+			.replace(/(הדרן עלך[^:]+?)</g, "$1:<") // insert colons after `הדרן עלך` if needed
+			.replace(/[<>\\a-z/]/g, "") // remove html tags e.g. <big>, </strong> etc.
 			.replace(/\s{2,}/g, " ") // white space
-			.replace(/מתני'/g, "מתני׳"); // uniform apostrophes
+			.replace(/: מתני'/g, ": מתני׳") // use `׳` for in-mishna abbreviation
+			.replace(/(?<!: )מתני׳/g, "מתני'"); // use `'` for in-gemara abbreviations
 
 		// Cache for later use:
 		talmudTree[seder][masechet] = masechet.text;
