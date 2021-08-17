@@ -1,131 +1,275 @@
-import { pad, getMasechet/*, levenshtein*/ } from "./modules.js";
+import { getMasechet, levenshtein } from "./modules.js";
 
-const mishnaKey = "מתני׳";
+// Sensitivity
+const levMinMishna = 15;
+const levMinCitations = 5;
 
-function query(masechet, searchQuery) {
-	/* Find the mishna that contains the query */
+/**
+ * @typedef {Object} segment
+ * @property {number} start
+ * @property {number} end
+ * @property {string} text
+ */
+/**
+ * @typedef {Object} citation
+ * @property {number} start
+ * @property {number} end
+ * @property {string} text
+ * @property {number} inRow
+ * @property {boolean} isPartOfRow
+ * @property {number} levFromNext
+ */
+/**
+ * @typedef {Object} mishna
+ * @property {number} start
+ * @property {number} end
+ * @property {string} text
+ * @property {citation[]} citations
+ */
 
-	/* This regex was inspired by https://stackoverflow.com/a/8374980,
-		and captures the last mishna that contains the search query		*/
-	const firstMishnaRegExp = new RegExp(mishnaKey + "(?:[^:](?!" + mishnaKey + "))+?" + searchQuery + "[^:]*?:");
-	const firstMishna = masechet.match(firstMishnaRegExp);
+/**
+ * Shows progress to the user
+ * @param {number} current Number of completed operations
+ * @param {number} total Number of total operations
+ */
+function updateProgress(current, total) {
+	if (current === total) {
+		$("#results").empty();
+	} else {
+		$("#results").text(`סורק משניות... (${current} / ${total})`);
+	}
+}
 
-	if (firstMishna === null) {
-		$("#results-count-total, #results-count-consecutive").text(0);
-		$("#results-container").show();
-		$("#results").append(`<li style="display: block;">הביטוי שהזנת לא נמצא במשנה</li>`);
-		return;
+/** Splits the masechet at every mishna
+ * @param {string} masechet
+ * @returns {mishna[]}
+ */
+function getMishnas(masechet) {
+	const mishnas = [];
+
+	// This regex was inspired by https://stackoverflow.com/a/8374980, and captures the next mishna
+	const mishnaRegExp = new RegExp("(?:^|מתני׳)(?:.(?!גמ׳))+", "g");
+
+	let execResult = null;
+	while ((execResult = mishnaRegExp.exec(masechet)) !== null) {
+		mishnas.push({
+			start: execResult.index,
+			end: execResult.index + execResult[0].length,
+			text: execResult[0],
+			citations: [],
+		});
 	}
 
-	const endOfFirstMishna = firstMishna.index + firstMishna[0].length;
-	let startOfNextMishna = masechet.indexOf(" " + mishnaKey, endOfFirstMishna);
-	if (startOfNextMishna === -1) startOfNextMishna = masechet.length;
+	return mishnas;
+}
 
-	masechet = masechet.substring(firstMishna.index, startOfNextMishna);
-
-	/* Split the masechet at every colon and store all segments */
+/** Splits text from the gemara at every colon
+ * @param {string} gemara
+ * @returns {segment[]}
+ */
+function getSegments(gemara) {
 	const colonRegExp = /:/g;
 	const colonsIndexes = [];
 
 	let execResult = null;
-	while ((execResult = colonRegExp.exec(masechet)) !== null) {
+	while ((execResult = colonRegExp.exec(gemara)) !== null) {
 		colonsIndexes.push(execResult.index);
 	}
 
 	const segments = [];
-	const mishna = masechet.substring(0, colonsIndexes[0]);
 
 	// Store segments (ignore the last colon index)
 	for (let i = 0; i < colonsIndexes.length-1; i++) {
-		const indexes = [colonsIndexes[i], colonsIndexes[i + 1]];
+		const indices = [
+			colonsIndexes[i]+2, // Don't include the initial colon and space
+			colonsIndexes[i+1]+1, // Include the final colon
+		];
 		segments.push({
-			indexes,
-			result: masechet.substring(...indexes),
+			start: indices[0],
+			end: indices[1],
+			text: gemara.substring(indices[0], indices[1]),
 		});
 	}
 
-	/* Compare each segment to the original mishna */
-	const citations = [];
-	for (const segment of segments) {
-		const strippedText = segment.result
-			.replace(/^: ו?/, "")
-			.replace(/ וכו'\s*:?$/, "");
+	return segments;
+}
 
-		if (mishna.indexOf(strippedText) !== -1) citations.push(segment);
-	}
+/**
+ * Strips non-hebrew letters from a string
+ * @function stripText
+ * @param {string} str
+ * @returns {string}
+ */
+const stripText = str => str.replace(/[^\u05d0-\u05ea ]/g, "");
 
-	/* Find consecutive citations that contain the query */
-	for (const citation of citations) {
-		citation.isWanted = citation.result.indexOf(searchQuery) !== -1;
-	}
+/** Returns the levenshtein distance between a string and a substring
+ * @param {string} str
+ * @param {string} substr
+ * @returns {number}
+ */
+function levSubstring(str, substr) {
+	str = stripText(str);
+	substr = stripText(substr);
 
-	let maxConsecutive = 0;
-	for (let i = 0, consecutive = 0; i < citations.length; i++) {
-		if (citations[i].isWanted) {
-			consecutive++;
-		} else {
-			consecutive = 0;
+	// Stop here if `substr` is longer than `str` (which means it's not a substring)
+	if (str.length < substr.length) return levenshtein(str, substr);
+
+	/**
+	 * Searches `toSplit` and returns the best matching block
+	 *
+	 * #### Algorithm
+	 * - If each half will be longer than, but not double, the length
+	 *   of `toSearch`:
+	 *   - compare all possible blocks of `toSplit` and return the best block.
+	 *
+	 * - Else:
+	 *   - return the whole `toSplit` block.
+	 * @param {string} toSplit
+	 * @param {string} toSearch
+	 * @returns {string}
+	 */
+	function chooseBestBlock(toSplit, toSearch) {
+		const best = { text: "", dist: Infinity };
+
+		// Create all possible substrings that are the same length
+		// as `toSearch`, and find the best one out of them
+		for (let i = 0; i <= toSplit.length - toSearch.length; i++) {
+			const newText = toSplit.substring(i, i+toSearch.length);
+			const newDist = levenshtein(newText, toSearch);
+
+			if (newDist < best.dist) {
+				best.text = newText;
+				best.dist = newDist;
+			}
 		}
 
-		if (consecutive > maxConsecutive) {
-			maxConsecutive = consecutive;
+		// Return the substring that had the smallest levenshtein distance
+		return best.text;
+	}
+
+	const bestBlock = chooseBestBlock(str, substr);
+	const dist = levenshtein(bestBlock, substr);
+
+	// Handle short but unrelated substrings (which naturally tend to have small lev distances)
+	// by comparing them to the whole `str`, which will give a very big distance
+	const similarityRatio = 1 - dist / substr.length;
+	if (similarityRatio <= 0.5) return levenshtein(str, substr);
+
+	return dist;
+}
+
+/** Returns an array of all the citations after a mishna
+ * @param {segment[]} segments
+ * @param {string} mishnaText
+ * @returns {citation[]}
+ */
+function getCitations(segments, mishnaText) {
+	const citations = [];
+
+	for (const segment of segments) {
+		const levDist = levSubstring(mishnaText, segment.text);
+
+		if (levDist <= levMinMishna) {
+			citations.push({
+				...segment,
+				inRow: 1,
+				isPartOfRow: false,
+				levFromNext: Infinity,
+			});
+		}
+	}
+
+	return citations;
+}
+
+/**
+ * Searches a masechet for repeating citations.
+ * This function is async to allow the DOM to
+ * redraw while it is running
+ * @param {string} masechet
+ */
+async function query(masechet) {
+	const mishnas = getMishnas(masechet);
+
+	for (let i = 0; i < mishnas.length; i++) {
+		const gemaraText = masechet.substring(mishnas[i].end, mishnas[i+1]?.start ?? masechet.length);
+		const segments = getSegments(gemaraText);
+
+		const citations = getCitations(segments, mishnas[i].text);
+		mishnas[i].citations.push(...citations);
+
+		// Output progress to the screen and give the browser time to render the new text
+		updateProgress(i+1, mishnas.length);
+		await new Promise(resolve => setTimeout(resolve));
+	}
+
+	/* Count citation repeats */
+	for (const mishna of mishnas) {
+		const cits = mishna.citations;
+
+		for (let i = 0; i < cits.length; i++) {
+			const cit = cits[i];
+
+			for (let j = i+1; j < cits.length; j++) { // Compare to subsequent citations
+				const sorted = [cit.text, cits[j].text]
+					.map(str => stripText(str)) // Strip text
+					.sort((a, b) => b.length - a.length); // Sort by length (longer one should appear first)
+				const levDist = levenshtein(sorted[0], sorted[1]);
+
+				if (j === i+1) cit.levFromNext = levDist; // Only store distance from immediate neighbor
+
+				if (levDist < levMinCitations) {
+					cit.inRow++;
+					cits[j].isPartOfRow = true;
+				} else {
+					break;
+				}
+			}
 		}
 	}
 
 	/* Output results */
-	for (const citation of citations) {
-		// Wrap the citation with some of the text before and after it:
-		let text = masechet
-			.substring(citation.indexes[0] - 50, citation.indexes[1] + 50);
+	let code = "";
+	for (const mishna of mishnas) {
+		code += `<p class="mishna-text">${mishna.text}</p><ul>`; // List current mishna
 
-		if (citation.isWanted) {
-			text = text.split(searchQuery);
-			text = pad(text[0], `<strong>${searchQuery}</strong>`, text[1], 40);
+		if (mishna.citations.length > 0) { // List citations, if there are any
+			for (const citation of mishna.citations) {
+				if (citation.isPartOfRow) { // Handle rows of citations
+					code +=
+						`<li class="unlisted"><ul><li class="talmud-text">${citation.text}`;
+				} else { // Handle single citations
+					code +=
+						`<li class="unlisted">הציטוט הבא מופיע
+							${citation.inRow === 1 ? "פעם אחת": `${citation.inRow} פעמים`}:
+							<ul><li class="talmud-text">${citation.text}`;
+				}
+
+				if (citation.levFromNext < Infinity) {
+					code += ` <span class="unlisted">(מרחק מהבא: ${citation.levFromNext})</span>`;
+				}
+
+				code += `</li></ul></li>`;
+			}
 		} else {
-			text = text.split(":");
-			text = pad(text[0] + ":", text[1] + ":", text[2], 40);
+			code += `<li class="unlisted">אין ציטטות בין משנה זו למשנה הבאה</li>`;
 		}
-
-		$("#results").append(`<li class=${citation.isWanted ? "wanted" : "unwanted"}>${text}</li>`);
+		code += "</ul>";
 	}
-
-	if (citations.filter(citation => citation.isWanted).length === 0) {
-		$("#results").append(`<li style="display: block;">
-			הביטוי שהזנת לא צוטט בגמרא לאחר המשנה שמתחילה במילים
-			"${pad("", "", mishna, 50)}"
-		</li>`);
-	}
-
-	$("#results-count-total").text($(".wanted").length);
-	$("#results-count-consecutive").text(maxConsecutive);
-
-	$("#results-container").show();
+	$("#results").append(code);
 }
 
 function searchClicked() {
+	const startTime = performance.now();
 	$("#results").empty();
-	$("#results-container").hide();
 
-	const searchQuery = $("#search-text").val().replace(/\s+/g, " ");
-	if (searchQuery.length < 4) {
-		window.alert("הביטוי חייב להכיל לפחות 4 תווים");
-		return;
-	}
-
-	getMasechet("Nezikin", "Bava Batra").then(value => {
-		query(value, searchQuery);
+	getMasechet("Nezikin", "Bava Batra").then(async masechet => {
+		await query(masechet);
+		const finishTime = performance.now();
+		console.log("Search took", finishTime - startTime, "milliseconds");
 	}, reason => {
-		alert("החיפוש נכשל.\n", reason);
+		alert("החיפוש נכשל:\n" + reason);
 	});
 }
 
-$("#search-button").click(searchClicked);
-$("#search-text").on("keypress", event => { // Treat ctrl+enter as click
-	if (event.keyCode === 13 && event.ctrlKey) {
-		searchClicked();
-	}
-});
-
-$("#show-unwanted").click(()=>{
-	$(".unwanted").css("display", "list-item");
-});
+$("#search").on("click", searchClicked);

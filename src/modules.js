@@ -2,7 +2,10 @@
 
 /*		-- get-masechet --
 	Returns a string containing a whole Talmud masechet
-	MIT License. Copyright (c) 2021 Michael Tsaban */
+	Raw code is shared under MIT License, Copyright (c) 2021 Michael Tsaban.
+	Returned text might be shared under another license. Refer to
+	https://github.com/Sefaria/Sefaria-Export/blob/master/LICENSE.md for more info */
+
 export const getMasechet = (function() {
 	const talmudTree = {
 		Zeraim: {
@@ -81,6 +84,11 @@ export const getMasechet = (function() {
 		},
 	};
 
+	/**
+	 * @param {string} seder
+	 * @param {string} masechet
+	 * @returns {Promise<string>}
+	 */
 	return async function(seder, masechet) {
 		if (!talmudTree?.[seder]?.[masechet]) throw TypeError("Invalid seder or masechet provided (not all masechtot are supported right now)");
 
@@ -89,26 +97,24 @@ export const getMasechet = (function() {
 
 		// Get from Sefaria (JSON format):
 		const url = `https://raw.githubusercontent.com/Sefaria/Sefaria-Export/master/json/Talmud/Bavli/Seder%20${seder}/${masechet}/Hebrew/merged.json`;
-		await $.get(url, data => {
-			masechet = data;
-		}, "json");
+		let /** @type {string[][]} */ textJSON;
+		await $.get(
+			url,
+			({ text }) => textJSON = text,
+			"json");
 
-		// Join all parts of the amudim:
-		for (let i = 0; i < masechet.text.length; i++) masechet.text[i] = masechet.text[i].join(" ");
-
-		// Join all amudim:
-		masechet.text = masechet.text.join(" ");
-
-		// Formatting fixes (Sefaria's talmud is pretty badly formatted):
-		masechet.text = masechet.text
-			.replace(/(הדרן עלך[^:]+?)</g, "$1:<") // insert colons after `הדרן עלך` if needed
-			.replace(/[<>\\a-z/]/g, "") // remove html tags e.g. <big>, </strong> etc.
-			.replace(/\s{2,}/g, " ") // white space
-			.replace(/: מתני'/g, ": מתני׳") // use `׳` for in-mishna abbreviation
-			.replace(/(?<!: )מתני׳/g, "מתני'"); // use `'` for in-gemara abbreviations
+		// Join all amudim With formatting fixes (Sefaria's talmud is pretty badly formatted)
+		const resultText = textJSON.flat().join(" ")
+			.replace(/(הדרן עלך[^:]+?)</g, "$1:<") // Insert colons after `הדרן עלך` if needed
+			.replace(/[<>\\a-z/]/g, "") // Remove html tags e.g. <big>, </strong> etc.
+			.replace(/[\t\n]/g, " ") // Convert single line breaks and tabs
+			.replace(/\s{2,}/g, " ") // Collapse white space
+			.replace(/: מתני'/g, ": מתני׳") // Use `׳` for in-mishna abbreviation
+			.replace(/(?<!: )מתני׳/g, "מתני'") // Use `'` for in-gemara abbreviations
+			.trim(); // Trim leading/trailing whitespace
 
 		// Cache for later use:
-		talmudTree[seder][masechet] = masechet.text;
+		talmudTree[seder][masechet] = resultText;
 
 		return talmudTree[seder][masechet];
 	};

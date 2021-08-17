@@ -1,11 +1,12 @@
-html {
-	--dicta-blue: #007ee5;
-	background: beige;
-	font-family: Arimo, sans-serif;
-}
+@import url('https://fonts.googleapis.com/css2?family=Arimo&display=swap');
 
 body {
+	--dicta-blue: #007ee5;
+	background: beige;
 	margin: 0;
+}
+button, .unlisted * {
+	font-family: Arimo, sans-serif;
 }
 
 .title {
@@ -14,14 +15,10 @@ body {
 }
 
 header {
-	color: white;
-	padding: 0.25em;
-	margin-bottom: 1em;
 	background: var(--dicta-blue);
-}
-
-.unwanted {
-	display: none;
+	color: white;
+	margin: 0 0 1em;
+	padding: 0.25em 0 1em;
 }
 
 #flex-container {
@@ -32,20 +29,23 @@ header {
 	width: 500px;
 }
 
-#search-text {
-	background: white;
-	border-radius: 5px;
-	border: 1px black solid;
-	height: 200px;
-	padding: 0.25em 0.5em;
-	resize: none;
-	width: 400px;
-}
-.talmud-text {
+.mishna-text, .talmud-text {
 	font-family: mft_narkisclassic, serif;
+	font-size: 12pt;
+	font-style: normal;
 }
 
-#search-button{
+.mishna-text {
+	font-size: 13pt;
+}
+
+.unlisted {
+	font-size: 10pt;
+	font-style: italic;
+	list-style: none;
+}
+
+#search{
 	background: var(--dicta-blue);
 	border-radius: 10px;
 	color: white;
@@ -53,12 +53,4 @@ header {
 	line-height: 1.5;
 	margin: 1em 0;
 	padding: .3rem 1.75rem;
-}
-
-#results-count {
-	font-size: 11pt;
-}
-
-#results-container {
-	display: none;
 }

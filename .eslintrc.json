@@ -59,6 +59,7 @@
 				"variables": true
 			}
 		],
+		"no-useless-return": "error",
 		"no-var": "error",
 		"quotes": [
 			"error",
