@@ -231,18 +231,30 @@ async function query(masechet) {
 	/* Output results */
 	let code = "";
 	for (const mishna of mishnas) {
-		code += `<p class="mishna-text">${mishna.text}</p><ul>`; // List current mishna
+		// List current mishna:
+		code += `<p class="mishna-text`;
 
-		if (mishna.citations.length > 0) { // List citations, if there are any
+		if (mishna.citations.filter(c => c.isPartOfRow).length === 0) {
+			code += " no-row";
+		}
+
+		code += `">${mishna.text}</p><ul>`;
+
+		// List citations, if there are any:
+		if (mishna.citations.length > 0) {
 			for (const citation of mishna.citations) {
-				if (citation.isPartOfRow) { // Handle rows of citations
-					code +=
-						`<li class="unlisted"><ul><li class="talmud-text">${citation.text}`;
-				} else { // Handle single citations
-					code +=
-						`<li class="unlisted">הציטוט הבא מופיע
-							${citation.inRow === 1 ? "פעם אחת": `${citation.inRow} פעמים`}:
-							<ul><li class="talmud-text">${citation.text}`;
+				if (citation.isPartOfRow) {
+					code += `<li class="unlisted"><ul><li class="talmud-text">${citation.text}`;
+				} else {
+					if (citation.inRow === 1) {
+						code +=
+							`<li class="unlisted no-row">הציטטה הבאה מופיעה פעם אחת:
+								<ul><li class="talmud-text">${citation.text}`;
+					} else {
+						code +=
+							`<li class="unlisted">הציטטה הבאה מופיעה ${`${citation.inRow} פעמים`}:
+								<ul><li class="talmud-text">${citation.text}`;
+					}
 				}
 
 				if (citation.levFromNext < Infinity) {
@@ -252,7 +264,7 @@ async function query(masechet) {
 				code += `</li></ul></li>`;
 			}
 		} else {
-			code += `<li class="unlisted">אין ציטטות בין משנה זו למשנה הבאה</li>`;
+			code += `<li class="unlisted no-row">אין ציטטות בין משנה זו למשנה הבאה</li>`;
 		}
 		code += "</ul>";
 	}
@@ -262,14 +274,25 @@ async function query(masechet) {
 function searchClicked() {
 	const startTime = performance.now();
 	$("#results").empty();
+	$("#hide").hide();
 
 	getMasechet("Nezikin", "Bava Batra").then(async masechet => {
 		await query(masechet);
-		const finishTime = performance.now();
-		console.log("Search took", finishTime - startTime, "milliseconds");
+
+		$("#hide").text("הסתר ציטוטים לא רצופים");
+		$("#hide").show();
+
+		console.log("Search took", performance.now() - startTime, "milliseconds");
 	}, reason => {
 		alert("החיפוש נכשל:\n" + reason);
 	});
 }
 
 $("#search").on("click", searchClicked);
+
+$("#hide").on("click", () => {
+	$("#hide").text() === "הצג ציטוטים לא רצופים" ?
+		$("#hide").text("הסתר ציטוטים לא רצופים") :
+		$("#hide").text("הצג ציטוטים לא רצופים");
+	$(".no-row").toggle();
+});

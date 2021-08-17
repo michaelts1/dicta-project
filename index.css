@@ -45,12 +45,17 @@ header {
 	list-style: none;
 }
 
-#search{
+button {
+	background: #408fe5;
+	border-radius: 7px;
+	color: white;
+	line-height: 1.5;
+}
+
+#search {
 	background: var(--dicta-blue);
 	border-radius: 10px;
-	color: white;
-	font-size: 12pt;
-	line-height: 1.5;
 	margin: 1em 0;
 	padding: .3rem 1.75rem;
+	font-size: 12pt;
 }
