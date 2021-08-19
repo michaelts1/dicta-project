@@ -6,7 +6,7 @@
 	Returned text might be shared under another license. Refer to
 	https://github.com/Sefaria/Sefaria-Export/blob/master/LICENSE.md for more info */
 
-export const getMasechet = (function() {
+export const talmud = (function() {
 	const talmudTree = {
 		Zeraim: {
 			Berakhot: [],
@@ -84,19 +84,90 @@ export const getMasechet = (function() {
 		},
 	};
 
+	const translations = {
+		"Avodah Zarah": "עבודה זרה",
+		"Bava Batra": "בבא בתרא",
+		"Bava Kamma": "בבא קמא",
+		"Bava Metzia": "בבא מציאה",
+		"Moed Katan": "מועד קטן",
+		"Rosh Hashanah": "ראש השנה",
+		Arakhin: "ערכין",
+		Beitzah: "ביצה",
+		Berakhot: "ברכות",
+		Bekhorot: "בכורות",
+		Chagigah: "חגיגה",
+		Chullin: "חולין",
+		Eruvin: "עירובין",
+		Gittin: "גיטין",
+		Horayot: "הוריות",
+		Keritot: "כריתות",
+		Ketubot: "כתובות",
+		Kiddushin: "קידושין",
+		Makkot: "מכות",
+		Megillah: "מגילה",
+		Meilah: "מעילה",
+		Menachot: "מנחות",
+		Nazir: "נזיר",
+		Nedarim: "נדרים",
+		Niddah: "נידה",
+		Pesachim: "פסחים",
+		Sanhedrin: "סנהדרין",
+		Shabbat: "שבת",
+		Shevuot: "שבועות",
+		Sotah: "סוטה",
+		Sukkah: "סוכה",
+		Taanit: "תענית",
+		Tamid: "תמיד",
+		Temurah: "תמורה",
+		Yevamot: "יבמות",
+		Yoma: "יומא",
+		Zevachim: "זבחים",
+	}
+
+	/**
+	 * Returns the hebrew name of the masechet
+	 * @param {string} masechet 
+	 * @returns {string}
+	 */
+	function masechetName(masechet) {
+		return translations[masechet] ?? "לא ידוע"
+	}
+
+	/**
+	 * @typedef masechtotList
+	 * @type {Object.<string, string[]> & {num: number}}
+	 */
+	/**
+	 * Returns an object representing the seders and masechtot currently supported
+	 * @returns {masechtotList}
+	 */
+	function getMasechtotList() {
+		const /** @type {masechtotList} */ masechtot = {num: 0};
+
+		for (const seder of Object.keys(talmudTree)) {
+			masechtot[seder] = [];
+			for (const masechet in talmudTree[seder]) {
+				masechtot[seder].push(masechet);
+				masechtot.num++;
+			}
+		}
+
+		return masechtot;
+	}
+
 	/**
 	 * @param {string} seder
 	 * @param {string} masechet
 	 * @returns {Promise<string>}
 	 */
-	return async function(seder, masechet) {
+	async function getMasechet(seder, masechet) {
 		if (!talmudTree?.[seder]?.[masechet]) throw TypeError("Invalid seder or masechet provided (not all masechtot are supported right now)");
 
 		// Get from cache:
 		if (talmudTree[seder][masechet].length !== 0) return talmudTree[seder][masechet];
 
 		// Get from Sefaria (JSON format):
-		const url = `https://raw.githubusercontent.com/Sefaria/Sefaria-Export/master/json/Talmud/Bavli/Seder%20${seder}/${masechet}/Hebrew/merged.json`;
+		const url = `https://raw.githubusercontent.com/Sefaria/Sefaria-Export/master/json/Talmud/Bavli/Seder%20${seder}/${masechet}/Hebrew/Wikisource%20Talmud%20Bavli.json`;
 		let /** @type {string[][]} */ textJSON;
 		await $.get(
 			url,
@@ -105,41 +176,28 @@ export const getMasechet = (function() {
 
 		// Join all amudim With formatting fixes (Sefaria's talmud is pretty badly formatted)
 		const resultText = textJSON.flat().join(" ")
+			.replace(/([^:])( <big><strong>גמ)/g, "$1: $2") // Add missing colons
 			.replace(/(הדרן עלך[^:]+?)</g, "$1:<") // Insert colons after `הדרן עלך` if needed
-			.replace(/[<>\\a-z/]/g, "") // Remove html tags e.g. <big>, </strong> etc.
 			.replace(/[\t\n]/g, " ") // Convert single line breaks and tabs
 			.replace(/\s{2,}/g, " ") // Collapse white space
-			.replace(/: מתני'/g, ": מתני׳") // Use `׳` for in-mishna abbreviation
-			.replace(/(?<!: )מתני׳/g, "מתני'") // Use `'` for in-gemara abbreviations
+			.replace(/(?<!<strong>)מתני׳/g, "מתני'") // Apostrophes - remove misplaced
+			.replace(/(?<!<strong>)גמ׳/g, "גמ'")     // Apostrophes - remove misplaced
+			.replace(/(?<=<strong>)מתני'/g, "מתני׳") // Apostrophes - add missing
+			.replace(/(?<=<strong>)גמ'/g, "גמ׳")     // Apostrophes - add missing
+			.replace(/(: גמ) /g, "$1׳ ")              // Apostrophes - add missing
+			.replace(/[<>\\a-z/]/g, "") // Remove html tags e.g. <big>, </strong> etc.
 			.trim(); // Trim leading/trailing whitespace
 
 		// Cache for later use:
 		talmudTree[seder][masechet] = resultText;
 
 		return talmudTree[seder][masechet];
-	};
-})();
-
-/*		-- pad-text --
-	Shorten a string without truncating words - Based on https://stackoverflow.com/a/40382963
-	MIT License. Copyright (c) 2021 Michael Tsaban */
-export const pad = (function() {
-	function _shortenEnd(str, len) {
-		return str.length <= len ?
-			str :
-			str.substr(0, str.lastIndexOf(" ", len));
 	}
 
-	function _shortenStart(str, len) {
-		return str.length <= len ?
-			str :
-			_shortenStart( // recursively remove the first word
-				str.substring(
-					str.indexOf(" ")+1), len);
-	}
-
-	return function(startString, mainString, endString, padSize) {
-		return _shortenStart(startString, padSize) + mainString + _shortenEnd(endString, padSize);
+	return {
+		masechetName,
+		getMasechtotList,
+		getMasechet,
 	};
 })();
 

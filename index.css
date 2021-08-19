@@ -29,6 +29,28 @@ header {
 	width: 500px;
 }
 
+#results {
+	border: solid black 1px;
+	display: none;
+	flex-direction: row;
+	margin: 0.5em;
+	max-width: 95vw;
+	overflow-x: scroll;
+	width: 95vw;
+}
+
+.masechet {
+	border: solid black 1px;
+	max-height: 65vh;
+	min-width: 500px;
+	overflow-y: scroll;
+	padding: 0 1em;
+}
+
+.masechet h3 {
+	text-align: center;
+}
+
 .mishna-text, .talmud-text {
 	font-family: mft_narkisclassic, serif;
 	font-size: 12pt;

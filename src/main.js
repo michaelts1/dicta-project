@@ -1,4 +1,4 @@
-import { getMasechet, levenshtein } from "./modules.js";
+import { talmud, levenshtein } from "./modules.js";
 
 // Sensitivity
 const levMinMishna = 15;
@@ -29,15 +29,25 @@ const levMinCitations = 5;
 
 /**
  * Shows progress to the user
+ * @param {"masechet" | "mishna" | "citation"} part Number of completed operations
  * @param {number} current Number of completed operations
  * @param {number} total Number of total operations
  */
-function updateProgress(current, total) {
+async function updateProgress(part, current, total) {
+	const str = part === "masechet" ?
+		"מסכתות" :
+		part === "mishna" ?
+			"משניות" :
+			"ציטטות";
+
 	if (current === total) {
-		$("#results").empty();
+		$(`#progress-${part}`).empty();
 	} else {
-		$("#results").text(`סורק משניות... (${current} / ${total})`);
+		$(`#progress-${part}`).text(`סורק ${str}: ${Math.floor(current / total * 100)}%`);
 	}
+
+	// Give browser time to render the new text
+	await new Promise(resolve => setTimeout(resolve));
 }
 
 /** Splits the masechet at every mishna
@@ -47,8 +57,8 @@ function updateProgress(current, total) {
 function getMishnas(masechet) {
 	const mishnas = [];
 
-	// This regex was inspired by https://stackoverflow.com/a/8374980, and captures the next mishna
-	const mishnaRegExp = new RegExp("(?:^|מתני׳)(?:.(?!גמ׳))+", "g");
+	// This regex was inspired by https://stackoverflow.com/a/8374980, and captures a mishna
+	const mishnaRegExp = new RegExp("(?:^|מתני׳)(?:.(?!(?:גמ׳|הדרן עלך)))+", "g");
 
 	let execResult = null;
 	while ((execResult = mishnaRegExp.exec(masechet)) !== null) {
@@ -121,7 +131,6 @@ function levSubstring(str, substr) {
 	 * - If each half will be longer than, but not double, the length
 	 *   of `toSearch`:
 	 *   - compare all possible blocks of `toSplit` and return the best block.
-	 *
 	 * - Else:
 	 *   - return the whole `toSplit` block.
 	 * @param {string} toSplit
@@ -161,17 +170,18 @@ function levSubstring(str, substr) {
 /** Returns an array of all the citations after a mishna
  * @param {segment[]} segments
  * @param {string} mishnaText
- * @returns {citation[]}
+ * @returns {Promise<citation[]>}
  */
-function getCitations(segments, mishnaText) {
+async function getCitations(segments, mishnaText) {
 	const citations = [];
 
-	for (const segment of segments) {
-		const levDist = levSubstring(mishnaText, segment.text);
+	for (let i = 0; i < segments.length; i++) {
+		await updateProgress("citation", i+1, segments.length);
 
+		const levDist = levSubstring(mishnaText, segments[i].text);
 		if (levDist <= levMinMishna) {
 			citations.push({
-				...segment,
+				...segments[i],
 				inRow: 1,
 				isPartOfRow: false,
 				levFromNext: Infinity,
@@ -183,24 +193,22 @@ function getCitations(segments, mishnaText) {
 }
 
 /**
- * Searches a masechet for repeating citations.
- * This function is async to allow the DOM to
- * redraw while it is running
+ * Searches a masechet for repeating citations
  * @param {string} masechet
+ * @returns {Promise<string>} HTML code that renders
+ * to a list of the citations in this masechet
  */
 async function query(masechet) {
 	const mishnas = getMishnas(masechet);
 
 	for (let i = 0; i < mishnas.length; i++) {
+		await updateProgress("mishna", i+1, mishnas.length);
+
 		const gemaraText = masechet.substring(mishnas[i].end, mishnas[i+1]?.start ?? masechet.length);
 		const segments = getSegments(gemaraText);
 
-		const citations = getCitations(segments, mishnas[i].text);
+		const citations = await getCitations(segments, mishnas[i].text);
 		mishnas[i].citations.push(...citations);
-
-		// Output progress to the screen and give the browser time to render the new text
-		updateProgress(i+1, mishnas.length);
-		await new Promise(resolve => setTimeout(resolve));
 	}
 
 	/* Count citation repeats */
@@ -235,7 +243,7 @@ async function query(masechet) {
 		code += `<p class="mishna-text`;
 
 		if (mishna.citations.filter(c => c.isPartOfRow).length === 0) {
-			code += " no-row";
+			code += ` no-row`;
 		}
 
 		code += `">${mishna.text}</p><ul>`;
@@ -268,24 +276,44 @@ async function query(masechet) {
 		}
 		code += "</ul>";
 	}
-	$("#results").append(code);
+
+	return code;
 }
 
-function searchClicked() {
+async function searchClicked() {
 	const startTime = performance.now();
+
 	$("#results").empty();
+	$("#results").css({display: "none"});
 	$("#hide").hide();
 
-	getMasechet("Nezikin", "Bava Batra").then(async masechet => {
-		await query(masechet);
+	const tree = talmud.getMasechtotList();
 
-		$("#hide").text("הסתר ציטוטים לא רצופים");
-		$("#hide").show();
+	let code = "";
+	let counter = 0;
 
-		console.log("Search took", performance.now() - startTime, "milliseconds");
-	}, reason => {
-		alert("החיפוש נכשל:\n" + reason);
-	});
+	await updateProgress("masechet", counter++, tree.num);
+
+	for (const seder of Object.keys(tree)) {
+		if (seder === "num") continue;
+
+		for (const masechet of tree[seder]) {
+			code += `<div id="${masechet}" class="masechet"><h3>${talmud.masechetName(masechet)}</h3>`;
+			const masechetText = await talmud.getMasechet(seder, masechet);
+			code += await query(masechetText);
+			code += "</div>";
+
+			await updateProgress("masechet", counter++, tree.num);
+		}
+	}
+
+	$("#results").append(code);
+
+	$("#hide").text("הסתר ציטוטים לא רצופים"); // Reset button label
+	$("#hide").show();
+	$("#results").css({display: "flex"});
+
+	console.log("Search took", performance.now() - startTime, "milliseconds");
 }
 
 $("#search").on("click", searchClicked);
