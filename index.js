@@ -1,7 +1,7 @@
 import { levenshtein, talmud, updateProgress } from "./modules.js";
-import * as perf_hooks from "perf_hooks";
+import { argv } from "process";
+import { performance } from "perf_hooks";
 import jsonfile from "jsonfile";
-import logUpdate from "log-update";
 
 // Sensitivity
 const levMinMishna = 15;
@@ -18,7 +18,7 @@ const levMinCitations = 5;
  * @property {number} start
  * @property {number} end
  * @property {string} text
- * @property {number} inRow
+ * @property {boolean} isPartOfRow
  * @property {number} levFromNext
  */
 /**
@@ -161,8 +161,8 @@ function getCitations(segments, mishnaText) {
 		if (levDist <= levMinMishna) {
 			citations.push({
 				...segments[i],
-				inRow: 1,
-				levFromNext: Infinity,
+				levFromNext: 9999, // Not using `Infinity` since JSON doesn't support it
+				isPartOfRow: false,
 			});
 		}
 	}
@@ -172,13 +172,14 @@ function getCitations(segments, mishnaText) {
 
 /**
  * Searches a masechet for repeating citations
- * @param {string} masechet
+ * @param {string} masechet Text contents of a masechet
+ * @param {boolean} printAll If false, omits mishnayot without repeating citations
  * @returns {mishna[]}
  */
-function query(masechet) {
+function query(masechet, printAll) {
 	const mishnayot = getMishnayot(masechet);
 
-	for (let i = 0; i < 2; i++) {
+	for (let i = 0; i < mishnayot.length; i++) {
 		updateProgress("mishna", i+1, mishnayot.length);
 
 		const gemaraText = masechet.substring(mishnayot[i].end, mishnayot[i+1]?.start ?? masechet.length);
@@ -190,47 +191,53 @@ function query(masechet) {
 
 	/* Count citation repeats */
 	for (const mishna of mishnayot) {
-		const cits = mishna.citations;
+		const { citations } = mishna;
 
-		for (let i = 0; i < cits.length; i++) {
-			const cit = cits[i];
+		for (let i = 0; i < citations.length; i++) {
+			const current = citations[i];
 
-			for (let j = i+1; j < cits.length; j++) { // Compare to subsequent citations
-				const sorted = [cit.text, cits[j].text]
+			// Compare to subsequent citations
+			for (let j = i+1; j < citations.length; j++) {
+				const sorted = [current.text, citations[j].text]
 					.map(str => stripText(str)) // Strip text
 					.sort((a, b) => b.length - a.length); // Sort by length (longer one should appear first)
 				const levDist = levenshtein(sorted[0], sorted[1]);
 
-				if (j === i+1) cit.levFromNext = levDist; // Only store distance from immediate neighbor
+				if (j === i+1) current.levFromNext = levDist; // Only store distance from immediate neighbor
 
 				if (levDist < levMinCitations) {
-					cit.inRow++;
+					current.isPartOfRow = citations[j].isPartOfRow = true;
 				} else {
 					break;
 				}
 			}
 		}
+
+		// Keep only repeating citations if `printAll` is false
+		if (!printAll) mishna.citations = mishna.citations.filter(cit => cit.isPartOfRow);
 	}
 
-	return mishnayot;
+	// Only return mishnayot with citations
+	return mishnayot.filter(mishna => mishna.citations.length > 0);
 }
 
 async function search() {
-	const startTime = perf_hooks.performance.now();
-
+	const startTime = performance.now();
+	const printAll = argv.includes("-a");
 	const masechtot = Object.entries(await talmud.getTalmud());
 
 	let result = {};
 	for (let i = 0; i < masechtot.length; i++) {
-		result[masechtot[i][0]] = query(masechtot[i][1]);
-		updateProgress("masechet", i, masechtot.length);
+		result[masechtot[i][0]] = query(masechtot[i][1], printAll);
+		updateProgress("masechet", i+1, masechtot.length);
 	}
-
 	jsonfile.writeFile("lastResult.json", result, { spaces: 2 });
-	logUpdate("Results have been written to './lastResult.json'");
-	logUpdate.done();
 
-	console.log("\nSearch took", perf_hooks.performance.now() - startTime, "milliseconds");
+	console.log(printAll ?
+		"Citations have been logged to './lastResult.json'" :
+		`Repeating citations have been logged to './lastResult.json.
+To include all citations, pass -a to the program.`);
+	console.log("\nSearch took", performance.now() - startTime, "milliseconds");
 }
 
 search();

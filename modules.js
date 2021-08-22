@@ -3,8 +3,7 @@ import logUpdate from "log-update";
 
 /* A bundle of different modules for this project */
 
-/*		-- get-masechet --
-	Returns a string containing a whole Talmud masechet
+/*		-- talmud --
 	Raw code is shared under MIT License, Copyright (c) 2021 Michael Tsaban.
 	Returned text might be shared under another license. Refer to
 	https://github.com/Sefaria/Sefaria-Export/blob/master/LICENSE.md for more info */
@@ -164,6 +163,7 @@ export const talmud = (function() {
 					.replace(/(?<!<strong>)גמ׳/g, "גמ'")     // Apostrophes - remove misplaced
 					.replace(/(?<=<strong>)מתני'/g, "מתני׳") // Apostrophes - add missing
 					.replace(/(?<=<strong>)גמ'/g, "גמ׳")     // Apostrophes - add missing
+					.replace(/מתני'(?=\s+<)/g, "מתני׳")      // Apostrophes - add missing
 					.replace(/(: גמ) /g, "$1׳ ")              // Apostrophes - add missing
 					.replace(/[<>\\a-z/]/g, "") // Remove html tags e.g. <big>, </strong> etc.
 					.trim(); // Trim leading/trailing whitespace
@@ -182,8 +182,10 @@ export const talmud = (function() {
 	};
 })();
 
+/**		-- updateProgress --
+	MIT License, Copyright (c) 2021 Michael Tsaban */
 export const updateProgress = (function() {
-	const _cache = {
+	const cache = {
 		citation: 0,
 		masechet: 0,
 		mishna: 0,
@@ -191,22 +193,24 @@ export const updateProgress = (function() {
 
 	/**
 	* Shows progress to the user
-	* @param {"masechet" | "mishna" | "citation"} part Number of completed operations
+	* @param {"masechet" | "mishna" | "citation"} part Update this part
 	* @param {number} current Number of completed operations
 	* @param {number} total Number of total operations
 	*/
 	return function(part, current, total) {
-		_cache[part] = Math.floor(current / total * 100);
+		cache[part] = Math.floor((current ?? 0) / (total ?? 1) * 100);
 
-		const msg =
-`Scanning masechtot: ${_cache.masechet}%
-  ┗━━━┳ Scanning mishnayot: ${_cache.mishna}%
-      ┗━━━━ Scanning citations: ${_cache.citation}%`;
-
-		logUpdate(msg);
+		if (cache.masechet >= 100 && cache.mishna >= 100 && cache.citation >= 100) {
+			logUpdate.clear();
+			logUpdate.done();
+		} else {
+			logUpdate(
+`Scanning masechtot: ${cache.masechet}%
+  ┗━━━┳ Scanning mishnayot: ${cache.mishna}%
+      ┗━━━━ Scanning citations: ${cache.citation}%`);
+		}
 	};
 })();
-
 
 /*		-- js-levenshtein --
 	Taken and modified from: https://github.com/gustf/js-levenshtein/blob/master/index.js
