@@ -1,87 +1,86 @@
 /* A bundle of different modules for this project */
 
-/*		-- get-masechet --
-	Returns a string containing a whole Talmud masechet
+/*		-- talmud --
 	Raw code is shared under MIT License, Copyright (c) 2021 Michael Tsaban.
 	Returned text might be shared under another license. Refer to
 	https://github.com/Sefaria/Sefaria-Export/blob/master/LICENSE.md for more info */
 
 export const talmud = (function() {
 	const talmudTree = {
-		Zeraim: {
-			Berakhot: [],
-			//Peah: [], -- does not exist on Sefaria
-			//Demai: [], -- does not exist on Sefaria
-			//Kilayim: [], -- does not exist on Sefaria
-			//Sheviit: [], -- does not exist on Sefaria
-			//Terumot: [], -- does not exist on Sefaria
-			//Maaserot: [], -- does not exist on Sefaria
-			//Challa: [], -- does not exist on Sefaria
-			//Orlah: [], -- does not exist on Sefaria
-			//Bikkurim: [], -- does not exist on Sefaria
-		},
-		Moed: {
-			Shabbat: [],
-			Eruvin: [],
-			Pesachim: [],
-			//Shekalim: [], -- does not exist on Sefaria
-			Yoma: [],
-			Sukkah: [],
-			Beitzah: [],
-			"Rosh Hashanah": [],
-			Taanit: [],
-			Megillah: [],
-			"Moed Katan": [],
-			Chagigah: [],
-		},
-		Nashim: {
-			Yevamot: [],
-			Ketubot: [],
-			Nedarim: [],
-			Nazir: [],
-			Sotah: [],
-			Gittin: [],
-			Kiddushin: [],
-		},
-		Nezikin: {
-			"Bava Kamma": [],
-			"Bava Metzia": [],
-			"Bava Batra": [],
-			Sanhedrin: [],
-			Makkot: [],
-			Shevuot: [],
-			//Eduyot: [], -- does not exist on Sefaria
-			"Avodah Zarah": [],
-			//Pirkei Avot: [], -- does not exist on Sefaria
-			Horayot: [],
-		},
-		Kodashim: {
-			Zevachim: [],
-			Menachot: [],
-			Chullin: [],
-			Bekhorot: [],
-			Arakhin: [],
-			Temurah: [],
-			Keritot: [],
-			Meilah: [],
-			Tamid: [],
-			//Middot: [], -- does not exist on Sefaria
-			//Kinnim: [], -- does not exist on Sefaria
-		},
-		Tahorot: {
-			//Keilim: [], -- does not exist on Sefaria
-			//Oholot: [], -- does not exist on Sefaria
-			//Negaim: [], -- does not exist on Sefaria
-			//Parah: [], -- does not exist on Sefaria
-			//Tohorot: [], -- does not exist on Sefaria
-			//Mikvaot: [], -- does not exist on Sefaria
-			Niddah: [],
-			//Makshirin: [], -- does not exist on Sefaria
-			//Zavim: [], -- does not exist on Sefaria
-			//Tevul Yom: [], -- does not exist on Sefaria
-			//Yadayim: [], -- does not exist on Sefaria
-			//Uktim: [], -- does not exist on Sefaria
-		},
+		Zeraim: [
+			"Berakhot",
+			//"Peah", -- does not exist on Sefaria
+			//"Demai", -- does not exist on Sefaria
+			//"Kilayim", -- does not exist on Sefaria
+			//"Sheviit", -- does not exist on Sefaria
+			//"Terumot", -- does not exist on Sefaria
+			//"Maaserot", -- does not exist on Sefaria
+			//"Challa", -- does not exist on Sefaria
+			//"Orlah", -- does not exist on Sefaria
+			//"Bikkurim", -- does not exist on Sefaria
+		],
+		Moed: [
+			"Shabbat",
+			"Eruvin",
+			"Pesachim",
+			//"Shekalim", -- does not exist on Sefaria
+			"Yoma",
+			"Sukkah",
+			"Beitzah",
+			"Rosh Hashanah",
+			"Taanit",
+			"Megillah",
+			"Moed Katan",
+			"Chagigah",
+		],
+		Nashim: [
+			"Yevamot",
+			"Ketubot",
+			"Nedarim",
+			"Nazir",
+			"Sotah",
+			"Gittin",
+			"Kiddushin",
+		],
+		Nezikin: [
+			"Bava Kamma",
+			"Bava Metzia",
+			"Bava Batra",
+			"Sanhedrin",
+			"Makkot",
+			"Shevuot",
+			//"Eduyot", -- does not exist on Sefaria
+			"Avodah Zarah",
+			//"Pirkei Avot", -- does not exist on Sefaria
+			"Horayot",
+		],
+		Kodashim: [
+			"Zevachim",
+			"Menachot",
+			"Chullin",
+			"Bekhorot",
+			"Arakhin",
+			"Temurah",
+			"Keritot",
+			"Meilah",
+			"Tamid",
+			//"Middot", -- does not exist on Sefaria
+			//"Kinnim", -- does not exist on Sefaria
+		],
+		Tahorot: [
+			//"Keilim", -- does not exist on Sefaria
+			//"Oholot", -- does not exist on Sefaria
+			//"Negaim", -- does not exist on Sefaria
+			//"Parah", -- does not exist on Sefaria
+			//"Tohorot", -- does not exist on Sefaria
+			//"Mikvaot", -- does not exist on Sefaria
+			"Niddah",
+			//"Makshirin", -- does not exist on Sefaria
+			//"Zavim", -- does not exist on Sefaria
+			//"Tevul Yom", -- does not exist on Sefaria
+			//"Yadayim", -- does not exist on Sefaria
+			//"Uktim", -- does not exist on Sefaria
+		],
 	};
 
 	const translations = {
@@ -122,82 +121,91 @@ export const talmud = (function() {
 		Yevamot: "יבמות",
 		Yoma: "יומא",
 		Zevachim: "זבחים",
-	}
+	};
 
 	/**
-	 * Returns the hebrew name of the masechet
-	 * @param {string} masechet 
-	 * @returns {string}
+	 * @param {string} masechet English name
+	 * @returns {string} Hebrew name
 	 */
 	function masechetName(masechet) {
-		return translations[masechet] ?? "לא ידוע"
+		return translations[masechet] ?? "לא ידוע";
 	}
 
-	/**
-	 * @typedef masechtotList
-	 * @type {Object.<string, string[]> & {num: number}}
-	 */
-	/**
-	 * Returns an object representing the seders and masechtot currently supported
-	 * @returns {masechtotList}
-	 */
-	function getMasechtotList() {
-		const /** @type {masechtotList} */ masechtot = {num: 0};
+	/** @returns {Promise<{ [masechet: string]: string; }>} */
+	async function getTalmud() {
+		if (talmudTree.all) return talmudTree.all; // Get from cache
 
-		for (const seder of Object.keys(talmudTree)) {
-			masechtot[seder] = [];
-			for (const masechet in talmudTree[seder]) {
-				masechtot[seder].push(masechet);
-				masechtot.num++;
+		/** @type {{ [masechet: string]: string; }} */
+		const result = {};
+
+		for (const [seder, masechtot] of Object.entries(talmudTree)) {
+			for (const masechet of masechtot) {
+				$("#progress").text(`טוען את מסכת ${masechetName(masechet)}...`);
+
+				const url =
+					"https://raw.githubusercontent.com/Sefaria/Sefaria-Export/master/json/Talmud/" +
+					`Bavli/Seder%20${seder}/${masechet}/Hebrew/Wikisource%20Talmud%20Bavli.json`;
+
+				const json = await (await fetch(url)).json();
+
+				result[masechet] = json.text.flat().join(" ")
+					.replace(/([^:])( <big><strong>גמ)/g, "$1: $2") // Add missing colons
+					.replace(/(הדרן עלך[^:]+?)</g, "$1:<") // Insert colons after `הדרן עלך` if needed
+					.replace(/[\t\n]/g, " ") // Convert single line breaks and tabs
+					.replace(/\s{2,}/g, " ") // Collapse white space
+					.replace(/(?<!<strong>)מתני׳/g, "מתני'") // Apostrophes - remove misplaced
+					.replace(/(?<!<strong>)גמ׳/g, "גמ'")     // Apostrophes - remove misplaced
+					.replace(/(?<=<strong>)מתני'/g, "מתני׳") // Apostrophes - add missing
+					.replace(/(?<=<strong>)גמ'/g, "גמ׳")     // Apostrophes - add missing
+					.replace(/מתני'(?=\s+<)/g, "מתני׳")      // Apostrophes - add missing
+					.replace(/(: גמ) /g, "$1׳ ")              // Apostrophes - add missing
+					.replace(/[<>\\a-z/]/g, "") // Remove html tags e.g. <big>, </strong> etc.
+					.trim(); // Trim leading/trailing whitespace
 			}
 		}
 
-		return masechtot;
-	}
+		// Cache for later use
+		talmudTree.all = result;
 
-	/**
-	 * @param {string} seder
-	 * @param {string} masechet
-	 * @returns {Promise<string>}
-	 */
-	async function getMasechet(seder, masechet) {
-		if (!talmudTree?.[seder]?.[masechet]) throw TypeError("Invalid seder or masechet provided (not all masechtot are supported right now)");
-
-		// Get from cache:
-		if (talmudTree[seder][masechet].length !== 0) return talmudTree[seder][masechet];
-
-		// Get from Sefaria (JSON format):
-		const url = `https://raw.githubusercontent.com/Sefaria/Sefaria-Export/master/json/Talmud/Bavli/Seder%20${seder}/${masechet}/Hebrew/Wikisource%20Talmud%20Bavli.json`;
-		let /** @type {string[][]} */ textJSON;
-		await $.get(
-			url,
-			({ text }) => textJSON = text,
-			"json");
-
-		// Join all amudim With formatting fixes (Sefaria's talmud is pretty badly formatted)
-		const resultText = textJSON.flat().join(" ")
-			.replace(/([^:])( <big><strong>גמ)/g, "$1: $2") // Add missing colons
-			.replace(/(הדרן עלך[^:]+?)</g, "$1:<") // Insert colons after `הדרן עלך` if needed
-			.replace(/[\t\n]/g, " ") // Convert single line breaks and tabs
-			.replace(/\s{2,}/g, " ") // Collapse white space
-			.replace(/(?<!<strong>)מתני׳/g, "מתני'") // Apostrophes - remove misplaced
-			.replace(/(?<!<strong>)גמ׳/g, "גמ'")     // Apostrophes - remove misplaced
-			.replace(/(?<=<strong>)מתני'/g, "מתני׳") // Apostrophes - add missing
-			.replace(/(?<=<strong>)גמ'/g, "גמ׳")     // Apostrophes - add missing
-			.replace(/(: גמ) /g, "$1׳ ")              // Apostrophes - add missing
-			.replace(/[<>\\a-z/]/g, "") // Remove html tags e.g. <big>, </strong> etc.
-			.trim(); // Trim leading/trailing whitespace
-
-		// Cache for later use:
-		talmudTree[seder][masechet] = resultText;
-
-		return talmudTree[seder][masechet];
+		return result;
 	}
 
 	return {
 		masechetName,
-		getMasechtotList,
-		getMasechet,
+		getTalmud,
+	};
+})();
+
+/**		-- updateProgress --
+	MIT License, Copyright (c) 2021 Michael Tsaban */
+export const updateProgress = (function() {
+	const cache = {
+		citation: 0,
+		masechet: 0,
+		mishna: 0,
+	};
+
+	/**
+	* Shows progress to the user
+	* @param {"masechet" | "mishna" | "citation"} part Update this part
+	* @param {number} current Number of completed operations
+	* @param {number} total Number of total operations
+	*/
+	return async function(part, current, total) {
+		cache[part] = Math.floor((current ?? 0) / (total ?? 1) * 100);
+
+		if (cache.masechet >= 100 && cache.mishna >= 100 && cache.citation >= 100) {
+			$("#progress").text("");
+		} else {
+			$("#progress").html(
+				`סורק מסכתות: ${cache.masechet}%\n` +
+				`╯━ סורק משניות: ${cache.mishna}%\n` +
+				`        ╯━ סורק ציטטות: ${(cache.citation + "%").padEnd(4)}`,
+			);
+		}
+
+		// Give browser time to render the new text
+		await new Promise(resolve => setTimeout(resolve));
 	};
 })();
 
