@@ -86,54 +86,6 @@ export const talmud = (function() {
 		],
 	};
 
-	const translations = {
-		"Avodah Zarah": "עבודה זרה",
-		"Bava Batra": "בבא בתרא",
-		"Bava Kamma": "בבא קמא",
-		"Bava Metzia": "בבא מציאה",
-		"Moed Katan": "מועד קטן",
-		"Rosh Hashanah": "ראש השנה",
-		Arakhin: "ערכין",
-		Beitzah: "ביצה",
-		Berakhot: "ברכות",
-		Bekhorot: "בכורות",
-		Chagigah: "חגיגה",
-		Chullin: "חולין",
-		Eruvin: "עירובין",
-		Gittin: "גיטין",
-		Horayot: "הוריות",
-		Keritot: "כריתות",
-		Ketubot: "כתובות",
-		Kiddushin: "קידושין",
-		Makkot: "מכות",
-		Megillah: "מגילה",
-		Meilah: "מעילה",
-		Menachot: "מנחות",
-		Nazir: "נזיר",
-		Nedarim: "נדרים",
-		Niddah: "נידה",
-		Pesachim: "פסחים",
-		Sanhedrin: "סנהדרין",
-		Shabbat: "שבת",
-		Shevuot: "שבועות",
-		Sotah: "סוטה",
-		Sukkah: "סוכה",
-		Taanit: "תענית",
-		Tamid: "תמיד",
-		Temurah: "תמורה",
-		Yevamot: "יבמות",
-		Yoma: "יומא",
-		Zevachim: "זבחים",
-	};
-
-	/**
-	 * @param {string} masechet English name
-	 * @returns {string} Hebrew name
-	 */
-	function masechetName(masechet) {
-		return translations[masechet] ?? "לא ידוע";
-	}
-
 	/**
 	 * @returns {Promise<{ [masechet: string]: string; }>}
 	 */
@@ -177,7 +129,6 @@ export const talmud = (function() {
 	}
 
 	return {
-		masechetName,
 		getTalmud,
 	};
 })();
