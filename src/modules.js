@@ -87,7 +87,7 @@ export const talmud = (function() {
 		"Avodah Zarah": "עבודה זרה",
 		"Bava Batra": "בבא בתרא",
 		"Bava Kamma": "בבא קמא",
-		"Bava Metzia": "בבא מציאה",
+		"Bava Metzia": "בבא מציעא",
 		"Moed Katan": "מועד קטן",
 		"Rosh Hashanah": "ראש השנה",
 		Arakhin: "ערכין",
