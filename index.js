@@ -104,14 +104,8 @@ function levSubstring(str, substr) {
 	if (str.length < substr.length) return levenshtein(str, substr);
 
 	/**
-	 * Searches `toSplit` and returns the best matching block
-	 *
-	 * #### Algorithm
-	 * - If each half will be longer than, but not double, the length
-	 *   of `toSearch`:
-	 *   - compare all possible blocks of `toSplit` and return the best block.
-	 * - Else:
-	 *   - return the whole `toSplit` block.
+	 * Creates all possible substrings that are the same length
+	 * as `toSearch`, and finds the best one out of them
 	 * @param {string} toSplit
 	 * @param {string} toSearch
 	 * @returns {string}
@@ -119,8 +113,6 @@ function levSubstring(str, substr) {
 	function chooseBestBlock(toSplit, toSearch) {
 		const best = { text: "", dist: Infinity };
 
-		// Create all possible substrings that are the same length
-		// as `toSearch`, and find the best one out of them
 		for (let i = 0; i <= toSplit.length - toSearch.length; i++) {
 			const newText = toSplit.substring(i, i+toSearch.length);
 			const newDist = levenshtein(newText, toSearch);
